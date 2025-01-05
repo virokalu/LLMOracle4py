@@ -7,25 +7,27 @@ import sys
 import subprocess
 import types
 
+
 def py_try(algo, *args, correct=False):
     if not correct:
-        module = __import__("python_programs."+algo)
+        module = __import__("python_programs." + algo)
     else:
-        module = __import__("correct_python_programs."+algo)
+        module = __import__("correct_python_programs." + algo)
 
     fx = getattr(module, algo)
 
     try:
-        return getattr(fx,algo)(*args)
+        return getattr(fx, algo)(*args)
     except:
         return sys.exc_info()
 
 
 def prettyprint(o):
     if isinstance(o, types.GeneratorType):
-        return("(generator) " + str(list(o)))
+        return ("(generator) " + str(list(o)))
     else:
-        return(str(o))
+        return (str(o))
+
 
 graph_based = ["breadth_first_search",
                "depth_first_search",
@@ -36,31 +38,31 @@ graph_based = ["breadth_first_search",
                "shortest_path_lengths",
                "shortest_paths",
                "topological_ordering"
-              ]
+               ]
 
 if __name__ == "__main__":
     algo = sys.argv[1]
 
     if algo in graph_based:
         print("Correct Python:")
-        correct_module = __import__("correct_python_programs."+algo+"_test")
-        correct_fx = getattr(correct_module, algo+"_test")
-        getattr(correct_fx,"main")()
+        correct_module = __import__("correct_python_programs." + algo + "_test")
+        correct_fx = getattr(correct_module, algo + "_test")
+        getattr(correct_fx, "main")()
         print()
 
         print("Bad Python:")
-        test_module = __import__("python_programs."+algo+"_test")
-        test_fx = getattr(test_module, algo+"_test")
+        test_module = __import__("python_programs." + algo + "_test")
+        test_fx = getattr(test_module, algo + "_test")
         try:
-            getattr(test_fx,"main")()
+            getattr(test_fx, "main")()
         except:
             print(sys.exc_info())
         print()
 
         print("Bad Java:")
         try:
-            p1 = subprocess.Popen(["/usr/bin/java", "java_programs/"+algo.upper()+"_TEST"], stdout=subprocess.PIPE,
-                    universal_newlines=True)
+            p1 = subprocess.Popen(["/usr/bin/java", "java_programs/" + algo.upper() + "_TEST"], stdout=subprocess.PIPE,
+                                  universal_newlines=True)
             java_out = p1.stdout.read()
             print(type(java_out))
             print(prettyprint(java_out))
@@ -69,7 +71,7 @@ if __name__ == "__main__":
 
 
     else:
-        working_file = open("json_testcases/"+algo+".json", 'r')
+        working_file = open("json_testcases/" + algo + ".json", 'r')
 
         for line in working_file:
             py_testcase = json.loads(line)
@@ -91,9 +93,9 @@ if __name__ == "__main__":
 
             # check bad Java version
             try:
-                p1 = subprocess.Popen(["/usr/bin/java", "JavaDeserialization", algo]+ \
-                                    [json.dumps(arg) for arg in copy.deepcopy(test_in)], stdout=subprocess.PIPE,
-                                    universal_newlines=True)
+                p1 = subprocess.Popen(["/usr/bin/java", "JavaDeserialization", algo] + \
+                                      [json.dumps(arg) for arg in copy.deepcopy(test_in)], stdout=subprocess.PIPE,
+                                      universal_newlines=True)
                 java_out = p1.stdout.read()
                 print("Bad Java:   " + prettyprint(java_out))
             except:
