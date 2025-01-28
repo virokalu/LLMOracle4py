@@ -16,22 +16,29 @@ def get_names(directory_path):
     return names
 
 
-def run_program(file_path):
+def run_program(file_path, program_input=None):
     """
-        Runs a program using the given file path and returns its output.
+    Runs a program using the given file path and returns its output.
 
-        Parameters:
-        - file_path (str): The absolute or relative path to the script.
+    Parameters:
+    - file_path (str): The absolute or relative path to the script.
+    - program_input (str, optional): Input to be passed to the program.
 
-        Returns:
-        - output (str): The output of the program.
-        - error (str): Any error message from the program.
-        """
+    Returns:
+    - output (str): The output of the program.
+    - error (str): Any error message from the program.
+    """
     if not os.path.isfile(file_path):
         return None, f"Error: File '{file_path}' not found to run."
 
     try:
-        result = subprocess.run(["python", file_path], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ["python", file_path],
+            input=program_input,  # Pass input to the script
+            capture_output=True,
+            text=True,
+            check=True
+        )
         return result.stdout, None  # Output and no error
     except subprocess.CalledProcessError as e:
         return None, e.stderr  # No output, return error message
