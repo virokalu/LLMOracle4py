@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 
+from services.docExtract import read_file_content, extract_docstring
 from services.handlePrograms import get_names, run_program
 from services.handleTestCases import get_inputs
 
@@ -20,6 +21,10 @@ def main():
 
         """ Getting TestCases """
         num_lines, content = get_inputs(program_path+"/"+test_path+"/"+program_name+".json")
+
+        """ Read File Content """
+        doc_content = extract_docstring(read_file_content(program_path + "/" + py_path + "/" + program_name + ".py"))
+        print(doc_content)
 
         for i, item in enumerate(content, start=1):
             if isinstance(item, list) and len(item) == 2:
