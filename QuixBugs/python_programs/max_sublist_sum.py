@@ -16,7 +16,7 @@ max-sublist-sum
 
 Efficient equivalent to max(sum(arr[i:j]) for 0 <= i <= j <= len(arr))
 
-Algorithm source: WordAligned.org by Thomas Guest
+Algorithm source - WordAligned.org by Thomas Guest
 
 
 Input:
