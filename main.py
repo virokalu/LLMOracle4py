@@ -19,7 +19,7 @@ def main():
     programs_names = get_names(program_path+"/json_testcases")
 
     for program_name in programs_names:
-        print(program_name)
+        print(f"{program_name}\n")
 
         """ Getting TestCases """
         num_lines, content = get_inputs(program_path+"/"+test_path+"/"+program_name+".json")
@@ -29,7 +29,9 @@ def main():
 
         """ Extract the prompt Items """
         doc = Doc(doc_content)
-        doc.display_info()
+        print(f"{doc.sections}\n")
+        doc.print_sections()
+        print("==================================================================================")
 
         # for i, item in enumerate(content, start=1):
         #     if isinstance(item, list) and len(item) == 2:
