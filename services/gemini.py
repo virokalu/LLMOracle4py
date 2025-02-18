@@ -1,11 +1,10 @@
 import os
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig
-from google.ai.generativelanguage_v1beta.types import content
 
 
 class GeminiChat:
-    def __init__(self, api_key=None, model_name="gemini-2.0-flash-exp",
+    def __init__(self, system_instructions=None, api_key=None, model_name="gemini-2.0-flash-exp",
                  temperature=1, top_p=0.95, top_k=40, max_output_tokens=8192,
                  response_mime_type="application/json"):
         """
@@ -45,6 +44,7 @@ class GeminiChat:
         self.model = genai.GenerativeModel(
             model_name=model_name,
             generation_config=self.generation_config,
+            system_instruction=system_instructions,
         )
         self.chat_session = self.model.start_chat(history=[])
 
