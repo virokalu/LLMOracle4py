@@ -1,6 +1,7 @@
 import importlib
 import os
 import subprocess
+import threading
 
 
 def get_names(directory_path):
@@ -45,28 +46,36 @@ def run_program(file_path, program_input=None):
         return None, e.stderr  # No output, return error message
 
 
-def py_try(function_name, filepath, program_input):
+def py_try(function_name, filepath, *program_input, timeout=5):
     """
-    Dynamically imports and runs a function from the specified module.
+    Dynamically imports and runs a function from the specified module with a timeout.
 
     Parameters:
         function_name (str): The name of the algorithm function to run.
-        filepath:
+        filepath (str): The module path where the function is defined.
         program_input: Arguments to pass to the function.
+        timeout (int): Maximum execution time in seconds (default is 5 seconds).
 
     Returns:
-        The function output if successful, or an error message if an exception occurs.
+        Tuple: (Function output or None, Error message or None).
     """
     module_name = f"{filepath}.{function_name}"
 
-    try:
-        module = importlib.import_module(module_name)
-        function = getattr(module, function_name)
-        return function(program_input), None  # Run the function with provided arguments
+    result = [None]  # Mutable container to store function output
+    error = [None]
 
-    except AttributeError:
-        return None, f"Error: Function '{function_name}' not found in '{module_name}'."
-    except ModuleNotFoundError:
-        return None, f"Error: Module '{module_name}' not found."
-    except Exception as e:
-        return None, f"Error: {e}"  # More readable error message
+    def target():
+        try:
+            module = importlib.import_module(module_name)
+            result[0] = getattr(module, function_name)(*program_input)  # Run function
+        except Exception as e:
+            error[0] = f"Error: {e}"
+
+    thread = threading.Thread(target=target)
+    thread.start()
+    thread.join(timeout)  # Wait for the function to complete within the timeout
+
+    if thread.is_alive():  # Check if function is still running after timeout
+        return None, "Error: Function execution timed out"
+
+    return result[0], error[0]

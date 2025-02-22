@@ -4,7 +4,6 @@ def bitcount(n):
     while n:
         n ^= n - 1
         count += 1
-    print("Im in")
     return count
 
 

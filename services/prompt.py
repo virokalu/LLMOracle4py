@@ -21,17 +21,23 @@ def create_llm_prompt(data, output_data, input_data):
     # Define main instruction
     prompt = (
         "We are providing all the details need to know about the function including given output, output details, "
-        "inserted input and its details below.\n\n"
+        "inserted input and its details below. If the function is giving output as None the function is in a loop or "
+        "terminated while running, Take those instances as False\n"
     )
 
     # Add input details and actual input values
     input_section = "We input "
     if "Input" in data:
-        for i, (key, value) in enumerate(data["Input"].items(), 1):
-            input_value = input_data[i - 1] if i <= len(input_data) else "N/A"
-            input_section += f"{input_value} which is a {value} named as {key},"
-        input_section += "."
-    # Add expected output details
+        input_details = data["Input"]
+
+        if isinstance(input_details, str):  # If it's a string, treat it as a single input
+            input_section += f"{input_data[0]} which is {input_details}."
+
+        elif isinstance(input_details, dict):  # If it's a dictionary, iterate over it
+            for i, (key, value) in enumerate(input_details.items(), 1):
+                input_value = input_data[i - 1] if i <= len(input_data) else "N/A"
+                input_section += f"{input_value} which is a {value} named as {key},"
+            input_section += "."
 
     output_section = "\nAnd the function is giving a output of "
     if "Output" in data:

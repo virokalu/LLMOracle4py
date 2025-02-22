@@ -1,3 +1,6 @@
+import copy
+import json
+
 from dotenv import load_dotenv
 
 from models.doc import Doc
@@ -30,37 +33,37 @@ def main():
         print(f"{program_name}\n")
 
         """ Getting TestCases """
-        num_lines, content = get_inputs(program_path + "/" + test_path + "/" + program_name + ".json")
+        # num_lines, content = get_inputs(program_path + "/" + test_path + "/" + program_name + ".json")
+        working_file = open(program_path + "/" + test_path + "/" + program_name + ".json", 'r')
 
         """ Read File Content """
         doc_content = extract_docstring(read_file_content(program_path + "/" + py_path + "/" + program_name + ".py"))
 
         """ Extract the prompt Items """
         doc = Doc(doc_content)
-        print(f"{doc.sections}\n")
-        # doc.print_sections()
+
         print("==================================================================================")
 
-        for i, item in enumerate(content, start=1):
-            if isinstance(item, list) and len(item) == 2:
-                input_, output_ = item  # Extract input and output elements
+        for line in working_file:
+            py_testcase = json.loads(line)
+            input_, output_ = py_testcase  # Extract input and output elements
+            if not isinstance(input_, list):
+                input_ = [input_]
 
-                """ Running the Program """
-                print(f"\nLine {input_[0]}")
-                output, error = py_try(program_name, program_path + "." + py_path, input_[0])
+            if isinstance(input_, list) and len(input_) == 1 and isinstance(input_[0], list):
+                input_ = input_[0]  # Extract the single item
 
-                if output is not None:
-                    print(type(output))
-                    print("Output of program " + program_name + " ------------------------> " + output)
+            """ Running the Program """
+            output, error = py_try(program_name, program_path + "." + py_path, *copy.deepcopy(input_))
 
-                    """ Prompt Creation """
-                    print(create_llm_prompt(doc.sections, output, input_))
+            # print(type(output))
+            print("Output of program " + program_name + " ------------------------> " + str(output))
 
-                if error is not None:
-                    print("\nError on program " + program_name + " ------------------------>! " + error)
+            """ Prompt Creation """
+            print(create_llm_prompt(doc.sections, output, input_))
 
-            else:
-                print(f"Line {i}: Error - Invalid format in {program_name}")
+            if error is not None:
+                print("Error on program " + program_name + " ------------------------>! " + error + "\n")
 
 
 if __name__ == "__main__":
