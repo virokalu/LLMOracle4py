@@ -36,7 +36,16 @@ class GeminiChat:
                     "response": {
                         "type": "boolean",  # String representation of the type
                     },
+                    "suggestions": {
+                        "type": "string"
+                    },
+                    "reasons": {
+                        "type": "string"
+                    }
                 },
+                "required": [
+                    "response"
+                ]
             },
             response_mime_type=response_mime_type,
         )

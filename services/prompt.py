@@ -31,7 +31,7 @@ def create_llm_prompt(data, output_data, input_data):
         input_details = data["Input"]
 
         if isinstance(input_details, str):  # If it's a string, treat it as a single input
-            input_section += f"{input_data[0]} which is {input_details}."
+            input_section += f"{str(input_data)} which is {input_details}."
 
         elif isinstance(input_details, dict):  # If it's a dictionary, iterate over it
             for i, (key, value) in enumerate(input_details.items(), 1):

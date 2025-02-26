@@ -1,12 +1,13 @@
 import copy
 import json
+import sys
 
 from dotenv import load_dotenv
 
 from models.doc import Doc
 from services.docExtract import read_file_content, extract_docstring
+from services.gemini import GeminiChat
 from services.handlePrograms import get_names, py_try
-from services.handleTestCases import get_inputs
 from services.prompt import create_llm_prompt
 
 # Load environment variables
@@ -16,11 +17,38 @@ load_dotenv()
 def main():
     # Define main instructions
     instructions = (
-        "You are a Test Oracle that verifies the correctness of a function's output.\n"
-        "Your task is to check the actual output of a function is correct using the functions "
-        "description given.\n"
-        "Return only 'True' if the output is correct and 'False' if it is incorrect.\n\n"
+        "You are a Test Oracle that verifies the correctness of a function's output. Your task is to check whether "
+        "the actual output of a function is correct using the given function description. Return only 'True' if the "
+        "output is correct and 'False' if it is incorrect. Start by understanding the function’s purpose, "
+        "input requirements, and expected behavior. Analyze the given inputs, ensuring they match the expected format "
+        "and constraints. Execute the function and compare its actual output with the expected output, identifying "
+        "whether it matches, contains errors, or deviates unexpectedly. Handle edge cases by testing valid, boundary, "
+        "and invalid inputs, observing if the function crashes, loops infinitely, or produces incorrect values. If "
+        "the function returns None, consider whether it is stuck in a loop or failed to execute.\n"
+        "Ensure that the response field is either True or False, indicating whether the function output is correct or "
+        "incorrect."
+        """
+        Provide your response using the following format:
+        {
+          "properties": {
+            "response": {
+              "type": "boolean"
+            },
+            "suggestions": {
+              "type": "string"
+            },
+            "reasons": {
+              "type": "string"
+            }
+          },
+          "required": ["response"]
+        }
+        """
+        "Provide reasons explaining why the output is correct or incorrect and suggestions on how to improve the "
+        "function’s correctness."
     )
+
+    chat = GeminiChat(system_instructions=instructions)
 
     program_path = "QuixBugs"
     py_path = "python_programs"
@@ -59,11 +87,22 @@ def main():
             # print(type(output))
             print("Output of program " + program_name + " ------------------------> " + str(output))
 
-            """ Prompt Creation """
-            print(create_llm_prompt(doc.sections, output, input_))
-
             if error is not None:
                 print("Error on program " + program_name + " ------------------------>! " + error + "\n")
+
+            """ Prompt Creation """
+            prompt = create_llm_prompt(doc.sections, output, input_)
+
+            """ Send the Prompt to the Model """
+            message = chat.send_message(prompt)
+            print(message)
+
+    exit_program()
+
+
+def exit_program():
+    print("Exiting the program...")
+    sys.exit(0)
 
 
 if __name__ == "__main__":
