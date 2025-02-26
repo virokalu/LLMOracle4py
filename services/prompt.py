@@ -20,7 +20,7 @@ def create_llm_prompt(data, output_data, input_data):
 
     # Define main instruction
     prompt = (
-        "We are providing all the details need to know about the function including given output, output details, "
+        "We are providing the details you need to know about the function including given output, output details, "
         "inserted input and its details below. If the function is giving output as None the function is in a loop or "
         "terminated while running, Take those instances as False\n"
     )
@@ -43,7 +43,11 @@ def create_llm_prompt(data, output_data, input_data):
     if "Output" in data:
         output_section += f"{output_data}, which need to be {data['Output']}.\n"
 
+    pre_section = ""
+    if "Precondition" in data:
+        pre_section += f"And also there is a Precondition : {data['Precondition']}.\n"
+
     # Combine sections to build the prompt
-    prompt += f"{input_section}{output_section}"
+    prompt += f"{input_section}{output_section}{pre_section}"
 
     return prompt

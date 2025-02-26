@@ -1,6 +1,8 @@
 import copy
 import json
 import sys
+import time
+from collections import deque
 
 from dotenv import load_dotenv
 
@@ -12,6 +14,9 @@ from services.prompt import create_llm_prompt
 
 # Load environment variables
 load_dotenv()
+MAX_CALLS = 10  # Maximum calls allowed
+TIME_WINDOW = 60  # Time window in seconds (1 minute)
+timestamps = deque()  # Store timestamps of API calls
 
 
 def main():
@@ -58,7 +63,7 @@ def main():
     programs_names = get_names(program_path + "/json_testcases")
 
     for program_name in programs_names:
-        print(f"{program_name}\n")
+        print(f"\n{program_name}")
 
         """ Getting TestCases """
         # num_lines, content = get_inputs(program_path + "/" + test_path + "/" + program_name + ".json")
@@ -73,6 +78,11 @@ def main():
         print("==================================================================================")
 
         for line in working_file:
+
+            current_time = time.time()
+            while timestamps and timestamps[0] < current_time - TIME_WINDOW:
+                timestamps.popleft()
+
             py_testcase = json.loads(line)
             input_, output_ = py_testcase  # Extract input and output elements
             if not isinstance(input_, list):
@@ -85,24 +95,35 @@ def main():
             output, error = py_try(program_name, program_path + "." + py_path, *copy.deepcopy(input_))
 
             # print(type(output))
+            print("Input of program " + program_name + " ------------------------> " + str(input_))
             print("Output of program " + program_name + " ------------------------> " + str(output))
 
             if error is not None:
-                print("Error on program " + program_name + " ------------------------>! " + error + "\n")
+                print("Error on program " + program_name + " ------------------------>! " + error)
+            print("\n")
 
             """ Prompt Creation """
             prompt = create_llm_prompt(doc.sections, output, input_)
+            print(prompt)
 
-            """ Send the Prompt to the Model """
-            message = chat.send_message(prompt)
-            print(message)
+            if len(timestamps) < MAX_CALLS:
+
+                """ Send the Prompt to the Model """
+                message = chat.send_message(prompt)
+                print(message)
+
+                timestamps.append(current_time)
+            else:
+                sleep_time = TIME_WINDOW - (current_time - timestamps[0])
+                print(f"Rate limit reached! Sleeping for {sleep_time:.2f} seconds...")
+                time.sleep(sleep_time)
 
     exit_program()
 
 
 def exit_program():
     print("Exiting the program...")
-    sys.exit(0)
+    sys.exit()
 
 
 if __name__ == "__main__":
