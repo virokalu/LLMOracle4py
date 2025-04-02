@@ -1,4 +1,5 @@
 import copy
+import csv
 import json
 import sys
 import time
@@ -17,6 +18,10 @@ load_dotenv()
 MAX_CALLS = 10  # Maximum calls allowed
 TIME_WINDOW = 60  # Time window in seconds (1 minute)
 timestamps = deque()  # Store timestamps of API calls
+
+""" To store results """
+# Initialize data collection list
+results_data = []
 
 
 def main():
@@ -65,6 +70,13 @@ def main():
     for program_name in programs_names:
         print(f"\n{program_name}")
 
+        """ To store results """
+        # Initialize data dictionary for this program
+        program_data = {
+            'program_name': program_name,
+            'test_cases': []
+        }
+
         """ Getting TestCases """
         # num_lines, content = get_inputs(program_path + "/" + test_path + "/" + program_name + ".json")
         working_file = open(program_path + "/" + test_path + "/" + program_name + ".json", 'r')
@@ -103,7 +115,7 @@ def main():
             print("\n")
 
             """ Prompt Creation """
-            prompt = create_llm_prompt(doc.sections, output, input_)
+            prompt = create_llm_prompt(doc.sections, output, input_, error)
             print(prompt)
 
             if len(timestamps) < MAX_CALLS:
@@ -112,12 +124,62 @@ def main():
                 message = chat.send_message(prompt)
                 print(message)
 
+                """ To store results """
+                # Create test case data dictionary
+                test_case_data = {
+                    'input': str(input_),
+                    'expected_output': str(output_),
+                    'actual_output': str(output),
+                    'error': str(error) if error else None,
+                    'prompt': prompt,
+                    'llm_response': message
+                }
+                # Add test case data to program data
+                program_data['test_cases'].append(test_case_data)
+
                 timestamps.append(current_time)
             else:
                 sleep_time = TIME_WINDOW - (current_time - timestamps[0])
                 print(f"Rate limit reached! Sleeping for {sleep_time:.2f} seconds...")
                 time.sleep(sleep_time)
 
+        """ To store results """
+        # Add program data to results
+        results_data.append(program_data)
+
+    """ To store results """
+    # Save results to CSV after all programs are processed
+    csv_file = 'llm_oracle_results_gemini.csv'
+    with open(csv_file, 'w', newline='') as csvfile:
+        fieldnames = [
+            'program_name',
+            'test_case_number',
+            'input',
+            'expected_output',
+            'actual_output',
+            'error',
+            'prompt',
+            'llm_response'
+        ]
+
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for program in results_data:
+            for i, test_case in enumerate(program['test_cases']):
+                row = {
+                    'program_name': program['program_name'],
+                    'test_case_number': i + 1,
+                    'input': test_case['input'],
+                    'expected_output': test_case['expected_output'],
+                    'actual_output': test_case['actual_output'],
+                    'error': test_case['error'],
+                    'prompt': test_case['prompt'],
+                    'llm_response': test_case['llm_response']
+                }
+                writer.writerow(row)
+
+    print(f"\nResults saved to {csv_file}")
     exit_program()
 
 

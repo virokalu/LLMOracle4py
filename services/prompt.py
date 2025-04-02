@@ -1,7 +1,7 @@
 from models.doc import Doc
 
 
-def create_llm_prompt(data, output_data, input_data):
+def create_llm_prompt(data, output_data, input_data, error):
     """
     Generates an LLM prompt to verify the correctness of a function's output.
 
@@ -34,10 +34,14 @@ def create_llm_prompt(data, output_data, input_data):
             input_section += f"{str(input_data)} which is {input_details}."
 
         elif isinstance(input_details, dict):  # If it's a dictionary, iterate over it
-            for i, (key, value) in enumerate(input_details.items(), 1):
-                input_value = input_data[i - 1] if i <= len(input_data) else "N/A"
-                input_section += f"{input_value} which is a {value} named as {key},"
-            input_section += "."
+            if len(input_details) == 1:
+                key, value = next(iter(input_details.items()))
+                input_section += f"{input_details} which is a {value} named as {key},"
+            else:
+                for i, (key, value) in enumerate(input_details.items(), 1):
+                    input_value = input_data[i - 1] if i <= len(input_data) else "N/A"
+                    input_section += f"{input_value} which is a {value} named as {key},"
+                input_section += "."
 
     output_section = "\nAnd the function is giving a output of "
     if "Output" in data:
@@ -46,6 +50,10 @@ def create_llm_prompt(data, output_data, input_data):
     pre_section = ""
     if "Precondition" in data:
         pre_section += f"And also there is a Precondition : {data['Precondition']}.\n"
+
+    error_section = ""
+    if error is not None:
+        error_section += f"And the system is giving an error : {error}"
 
     # Combine sections to build the prompt
     prompt += f"{input_section}{output_section}{pre_section}"
