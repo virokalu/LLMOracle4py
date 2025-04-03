@@ -100,8 +100,8 @@ def main():
             if not isinstance(input_, list):
                 input_ = [input_]
 
-            if isinstance(input_, list) and len(input_) == 1 and isinstance(input_[0], list):
-                input_ = input_[0]  # Extract the single item
+            # if isinstance(input_, list) and len(input_) == 1 and isinstance(input_[0], list):
+            #     input_ = input_[0]  # Extract the single item
 
             """ Running the Program """
             output, error = py_try(program_name, program_path + "." + py_path, *copy.deepcopy(input_))
@@ -142,6 +142,24 @@ def main():
                 sleep_time = TIME_WINDOW - (current_time - timestamps[0])
                 print(f"Rate limit reached! Sleeping for {sleep_time:.2f} seconds...")
                 time.sleep(sleep_time)
+                """ Send the Prompt to the Model """
+                message = chat.send_message(prompt)
+                print(message)
+
+                """ To store results """
+                # Create test case data dictionary
+                test_case_data = {
+                    'input': str(input_),
+                    'expected_output': str(output_),
+                    'actual_output': str(output),
+                    'error': str(error) if error else None,
+                    'prompt': prompt,
+                    'llm_response': message
+                }
+                # Add test case data to program data
+                program_data['test_cases'].append(test_case_data)
+
+                timestamps.append(current_time)
 
         """ To store results """
         # Add program data to results
@@ -160,6 +178,8 @@ def main():
             'error',
             'prompt',
             'llm_response'
+            'llm_reasons',  # The "reasons" field
+            'llm_suggestions'  # The "suggestions" field
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -167,6 +187,25 @@ def main():
 
         for program in results_data:
             for i, test_case in enumerate(program['test_cases']):
+
+                # Parse the LLM response if it exists
+                llm_response = ''
+                llm_reasons = ''
+                llm_suggestions = ''
+
+                if llm_response:
+                    try:
+                        response_json = json.loads(test_case.get('llm_response', '').replace("'", "\""))  # Handle
+                        # potential single quotes
+                        llm_response = str(response_json.get('response', ''))
+                        llm_reasons = response_json.get('reasons', '')
+                        llm_suggestions = response_json.get('suggestions', '')
+                    except json.JSONDecodeError:
+                        # Handle case where response isn't valid JSON
+                        llm_response = 'ERROR'
+                        llm_reasons = 'Invalid JSON response'
+                        llm_suggestions = ''
+
                 row = {
                     'program_name': program['program_name'],
                     'test_case_number': i + 1,
@@ -175,7 +214,9 @@ def main():
                     'actual_output': test_case['actual_output'],
                     'error': test_case['error'],
                     'prompt': test_case['prompt'],
-                    'llm_response': test_case['llm_response']
+                    'llm_response': llm_response,
+                    'llm_reasons': llm_reasons,
+                    'llm_suggestions': llm_suggestions
                 }
                 writer.writerow(row)
 
