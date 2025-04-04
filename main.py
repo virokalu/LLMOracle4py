@@ -15,7 +15,7 @@ from services.prompt import create_llm_prompt
 
 # Load environment variables
 load_dotenv()
-MAX_CALLS = 10  # Maximum calls allowed
+MAX_CALLS = 8  # Maximum calls allowed
 TIME_WINDOW = 60  # Time window in seconds (1 minute)
 timestamps = deque()  # Store timestamps of API calls
 
@@ -66,6 +66,8 @@ def main():
 
     # Get the names of the programs that testcases are available
     programs_names = get_names(program_path + "/json_testcases")
+    # programs_names = ['bitcount']
+    # print(programs_names)
 
     for program_name in programs_names:
         print(f"\n{program_name}")
@@ -138,10 +140,17 @@ def main():
                 program_data['test_cases'].append(test_case_data)
 
                 timestamps.append(current_time)
+
             else:
                 sleep_time = TIME_WINDOW - (current_time - timestamps[0])
                 print(f"Rate limit reached! Sleeping for {sleep_time:.2f} seconds...")
                 time.sleep(sleep_time)
+
+                # After sleep, clear ALL expired timestamps (not just one)
+                current_time = time.time()  # Update time after sleep
+                while timestamps and timestamps[0] < current_time - TIME_WINDOW:
+                    timestamps.popleft()
+
                 """ Send the Prompt to the Model """
                 message = chat.send_message(prompt)
                 print(message)
@@ -177,7 +186,7 @@ def main():
             'actual_output',
             'error',
             'prompt',
-            'llm_response'
+            'llm_response',
             'llm_reasons',  # The "reasons" field
             'llm_suggestions'  # The "suggestions" field
         ]
@@ -188,23 +197,16 @@ def main():
         for program in results_data:
             for i, test_case in enumerate(program['test_cases']):
 
-                # Parse the LLM response if it exists
-                llm_response = ''
-                llm_reasons = ''
-                llm_suggestions = ''
-
-                if llm_response:
-                    try:
-                        response_json = json.loads(test_case.get('llm_response', '').replace("'", "\""))  # Handle
-                        # potential single quotes
-                        llm_response = str(response_json.get('response', ''))
-                        llm_reasons = response_json.get('reasons', '')
-                        llm_suggestions = response_json.get('suggestions', '')
-                    except json.JSONDecodeError:
-                        # Handle case where response isn't valid JSON
-                        llm_response = 'ERROR'
-                        llm_reasons = 'Invalid JSON response'
-                        llm_suggestions = ''
+                try:
+                    response_json = json.loads(test_case.get('llm_response', ''))
+                    llm_response = str(response_json.get("response", ""))
+                    llm_reasons = response_json.get("reasons", "")
+                    llm_suggestions = response_json.get("suggestions", "")
+                except json.JSONDecodeError:
+                    # Handle case where response isn't valid JSON
+                    llm_response = 'ERROR'
+                    llm_reasons = 'Invalid JSON response'
+                    llm_suggestions = ''
 
                 row = {
                     'program_name': program['program_name'],
@@ -216,7 +218,7 @@ def main():
                     'prompt': test_case['prompt'],
                     'llm_response': llm_response,
                     'llm_reasons': llm_reasons,
-                    'llm_suggestions': llm_suggestions
+                    'llm_suggestions': llm_suggestions,
                 }
                 writer.writerow(row)
 
