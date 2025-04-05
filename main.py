@@ -11,7 +11,7 @@ from models.doc import Doc
 from services.docExtract import read_file_content, extract_docstring
 from services.gemini import GeminiChat
 from services.handlePrograms import get_names, py_try
-from services.prompt import create_llm_prompt
+from services.prompt import create_llm_prompt, create_llm_prompt
 
 # Load environment variables
 load_dotenv()
@@ -26,39 +26,39 @@ results_data = []
 
 def main():
     # Define main instructions
-    instructions = (
-        "You are a Test Oracle that verifies the correctness of a function's output. Your task is to check whether "
-        "the actual output of a function is correct using the given function description. Return only 'True' if the "
-        "output is correct and 'False' if it is incorrect. Start by understanding the function’s purpose, "
-        "input requirements, and expected behavior. Analyze the given inputs, ensuring they match the expected format "
-        "and constraints. Execute the function and compare its actual output with the expected output, identifying "
-        "whether it matches, contains errors, or deviates unexpectedly. Handle edge cases by testing valid, boundary, "
-        "and invalid inputs, observing if the function crashes, loops infinitely, or produces incorrect values. If "
-        "the function returns None, consider whether it is stuck in a loop or failed to execute.\n"
-        "Ensure that the response field is either True or False, indicating whether the function output is correct or "
-        "incorrect."
-        """
-        Provide your response using the following format:
-        {
-          "properties": {
-            "response": {
-              "type": "boolean"
-            },
-            "suggestions": {
-              "type": "string"
-            },
-            "reasons": {
-              "type": "string"
-            }
-          },
-          "required": ["response"]
-        }
-        """
-        "Provide reasons explaining why the output is correct or incorrect and suggestions on how to improve the "
-        "function’s correctness."
-    )
+    # instructions = (
+    #     "You are a Test Oracle that verifies the correctness of a function's output. Your task is to check whether "
+    #     "the actual output of a function is correct using the given function description. Return only 'True' if the "
+    #     "output is correct and 'False' if it is incorrect. Start by understanding the function’s purpose, "
+    #     "input requirements, and expected behavior. Analyze the given inputs, ensuring they match the expected format "
+    #     "and constraints. Execute the function and compare its actual output with the expected output, identifying "
+    #     "whether it matches, contains errors, or deviates unexpectedly. Handle edge cases by testing valid, boundary, "
+    #     "and invalid inputs, observing if the function crashes, loops infinitely, or produces incorrect values. If "
+    #     "the function returns None, consider whether it is stuck in a loop or failed to execute.\n"
+    #     "Ensure that the response field is either True or False, indicating whether the function output is correct or "
+    #     "incorrect."
+    #     """
+    #     Provide your response using the following format:
+    #     {
+    #       "properties": {
+    #         "response": {
+    #           "type": "boolean"
+    #         },
+    #         "suggestions": {
+    #           "type": "string"
+    #         },
+    #         "reasons": {
+    #           "type": "string"
+    #         }
+    #       },
+    #       "required": ["response"]
+    #     }
+    #     """
+    #     "Provide reasons explaining why the output is correct or incorrect and suggestions on how to improve the "
+    #     "function’s correctness."
+    # )
 
-    chat = GeminiChat(system_instructions=instructions)
+    chat = GeminiChat()
 
     program_path = "QuixBugs"
     py_path = "python_programs"
@@ -117,6 +117,7 @@ def main():
             print("\n")
 
             """ Prompt Creation """
+            # prompt = create_llm_prompt(doc.sections, output, input_, error)
             prompt = create_llm_prompt(doc.sections, output, input_, error)
             print(prompt)
 
@@ -131,7 +132,7 @@ def main():
                 test_case_data = {
                     'input': str(input_),
                     'expected_output': str(output_),
-                    'actual_output': str(output),
+                    'program_output': str(output),
                     'error': str(error) if error else None,
                     'prompt': prompt,
                     'llm_response': message
@@ -160,7 +161,7 @@ def main():
                 test_case_data = {
                     'input': str(input_),
                     'expected_output': str(output_),
-                    'actual_output': str(output),
+                    'program_output': str(output),
                     'error': str(error) if error else None,
                     'prompt': prompt,
                     'llm_response': message
@@ -176,14 +177,16 @@ def main():
 
     """ To store results """
     # Save results to CSV after all programs are processed
-    csv_file = 'llm_oracle_results_gemini.csv'
+    # csv_file = 'llm_oracle_results_gemini.csv'
+    csv_file = 'llm_oracle_results_gemini_eng.csv'
+
     with open(csv_file, 'w', newline='') as csvfile:
         fieldnames = [
             'program_name',
             'test_case_number',
             'input',
             'expected_output',
-            'actual_output',
+            'program_output',
             'error',
             'prompt',
             'llm_response',
@@ -213,7 +216,7 @@ def main():
                     'test_case_number': i + 1,
                     'input': test_case['input'],
                     'expected_output': test_case['expected_output'],
-                    'actual_output': test_case['actual_output'],
+                    'program_output': test_case['program_output'],
                     'error': test_case['error'],
                     'prompt': test_case['prompt'],
                     'llm_response': llm_response,
