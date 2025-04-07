@@ -178,7 +178,7 @@ def main():
     """ To store results """
     # Save results to CSV after all programs are processed
     # csv_file = 'llm_oracle_results_gemini.csv'
-    csv_file = 'llm_oracle_results_gemini_eng.csv'
+    csv_file = 'llm_oracle_results_gemini.csv'
 
     with open(csv_file, 'w', newline='') as csvfile:
         fieldnames = [

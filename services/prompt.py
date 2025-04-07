@@ -70,7 +70,7 @@ def create_llm_prompt(data, output_data, input_data, error):
     # Technique: Clear Instruction with Output Indicator
     task_section = """\nVERIFICATION TASK:
         1. First analyze whether the function behaved correctly
-        2. If incorrect, identify the most likely cause
+        2. If incorrect, return false in response and identify the most likely cause
         3. Suggest specific fixes or tests to validate your hypothesis
         4. Rate confidence in your assessment (Low/Medium/High)
         

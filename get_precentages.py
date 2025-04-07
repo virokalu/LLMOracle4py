@@ -1,7 +1,9 @@
 import pandas as pd
 
+file_name = 'llm_oracle_results_gemini.csv'
+
 # Load the CSV file
-df = pd.read_csv('your_file.csv')  # Replace 'your_file.csv' with your actual file path
+df = pd.read_csv(file_name)  # Replace 'your_file.csv' with your actual file path
 
 # Calculate the percentage of correct results
 correct_count = df['LLM_correctness'].sum()
