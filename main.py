@@ -202,7 +202,7 @@ def main():
 
                 try:
                     response_json = json.loads(test_case.get('llm_response', ''))
-                    llm_response = str(response_json.get("response", ""))
+                    llm_response = response_json.get("response", "")
                     llm_reasons = response_json.get("reasons", "")
                     llm_suggestions = response_json.get("suggestions", "")
                 except json.JSONDecodeError:
