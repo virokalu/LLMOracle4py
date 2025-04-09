@@ -53,7 +53,7 @@ class GeminiChat:
         self.model = genai.GenerativeModel(
             model_name=model_name,
             generation_config=self.generation_config,
-            system_instruction=system_instructions,
+            system_instruction=system_instructions
         )
         self.chat_session = self.model.start_chat(history=[])
 
@@ -67,5 +67,5 @@ class GeminiChat:
         Returns:
             str: The response text from the Gemini model.
         """
-        response = self.chat_session.send_message(prompt)
+        response = self.chat_session.send_message(prompt, request_options={"timeout": 1000})
         return response.text

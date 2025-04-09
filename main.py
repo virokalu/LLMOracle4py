@@ -11,7 +11,7 @@ from models.doc import Doc
 from services.docExtract import read_file_content, extract_docstring
 from services.gemini import GeminiChat
 from services.handlePrograms import get_names, py_try
-from services.prompt import create_llm_prompt, create_llm_prompt
+from services.prompt import create_llm_prompt_extra
 
 # Load environment variables
 load_dotenv()
@@ -118,7 +118,7 @@ def main():
 
             """ Prompt Creation """
             # prompt = create_llm_prompt(doc.sections, output, input_, error)
-            prompt = create_llm_prompt(doc.sections, output, input_, error)
+            prompt = create_llm_prompt_extra(doc.sections, output, input_, error)
             print(prompt)
 
             if len(timestamps) < MAX_CALLS:
@@ -178,7 +178,7 @@ def main():
     """ To store results """
     # Save results to CSV after all programs are processed
     # csv_file = 'llm_oracle_results_gemini.csv'
-    csv_file = 'llm_oracle_results_gemini.csv'
+    csv_file = 'llm_oracle_results_gemini_extra.csv'
 
     with open(csv_file, 'w', newline='') as csvfile:
         fieldnames = [
